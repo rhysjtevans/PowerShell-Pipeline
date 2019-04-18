@@ -1,0 +1,155 @@
+version: "3.3"
+services:
+  # nexus: 
+  #   image: sonatype/nexus3:3.16.0
+  #   ports:
+  #     - 8081:8081
+  #   volumes: 
+  #     - "./volumes/nexus:/nexus-data"
+  #     - "./files/nexus/nexus.properties"
+  #   networks:
+  #     ci:
+
+  # gitlab:
+  #   image: gitlab/gitlab-ce
+  #   ports:
+  #     - 8000:80
+  #   networks:
+  #     ci:
+
+  # vault:
+  #   image: vault
+  #   ports:
+  #     - 8200:8200
+  #   networks:
+  #     ci:
+  #   cap_add:
+  #     - IPC_LOCK
+
+  logstash:
+    build:
+      context: docker-elk/logstash/
+    volumes:
+      - ./docker-elk/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./docker-elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000/tcp"
+      - "9600:9600/tcp"
+      - "5044:5044/tcp"
+      - "514:5145/udp"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - elk
+      - odfe-net
+    # depends_on:
+    #   - odfe-node1
+      # - odfe-node2
+
+
+  odfe-node1:
+    # image: amazon/opendistro-for-elasticsearch:0.8.0
+    build:
+      context: docker-elk/elasticsearch
+    hostname: odfe-node1
+    environment:
+      - cluster.name=odfe-cluster
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+      - opendistro_security.ssl.http.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - odfe-data1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      # - 9600:9600 # required for Performance Analyzer
+    networks:
+      - odfe-net
+
+  # odfe-node2:
+  #   image: amazon/opendistro-for-elasticsearch:0.8.0
+  #   hostname: odfe-node2
+  #   environment:
+  #     - cluster.name=odfe-cluster
+  #     - bootstrap.memory_lock=true
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - discovery.zen.ping.unicast.hosts=odfe-node1
+  #     - opendistro_security.ssl.http.enabled=false
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - odfe-data2:/usr/share/elasticsearch/data
+  #   networks:
+  #     - odfe-net
+
+  kibana:
+    image: amazon/opendistro-for-elasticsearch-kibana:0.8.0
+    # container_name: odfe-kibana
+    ports:
+      - 5601:5601
+    expose:
+      - "5601"
+    environment:
+      ELASTICSEARCH_URL: http://odfe-node1:9200
+    networks:
+      - odfe-net
+    # depends_on:
+    #   - logstash
+
+
+  # concourse-db:
+  #   image: postgres
+  #   environment:
+  #     - POSTGRES_DB=concourse
+  #     - POSTGRES_PASSWORD=concourse_pass
+  #     - POSTGRES_USER=concourse_user
+  #     - PGDATA=/database
+  #   networks:
+  #     - ci
+
+  # concourse-web:
+  #   image: concourse/concourse
+  #   command: web
+  #   links: [concourse-db]
+  #   depends_on: [concourse-db]
+  #   ports: 
+  #     - "8080:8080"
+  #   volumes: ["./keys/web:/concourse-keys"]
+  #   networks:
+  #     - ci
+  #   environment:
+  #     - CONCOURSE_POSTGRES_HOST=concourse-db
+  #     - CONCOURSE_POSTGRES_USER=concourse_user
+  #     - CONCOURSE_POSTGRES_PASSWORD=concourse_pass
+  #     - CONCOURSE_POSTGRES_DATABASE=concourse
+  #     - CONCOURSE_EXTERNAL_URL
+  #     - CONCOURSE_ADD_LOCAL_USER=test:test
+  #     - CONCOURSE_MAIN_TEAM_LOCAL_USER=test
+
+  # concourse-worker:
+  #   image: concourse/concourse
+  #   command: worker
+  #   privileged: true
+  #   links: [concourse-web]
+  #   depends_on: [concourse-web]
+  #   volumes: ["./keys/worker:/concourse-keys"]
+  #   networks:
+  #     - ci
+  #   environment:
+  #     - CONCOURSE_TSA_HOST=concourse-web:2222
+  #     - CONCOURSE_GARDEN_NETWORK
+networks:
+  ci:
+  odfe-net:
+  elk:
+
+volumes:
+  odfe-data1:
+  odfe-data2:
+  vault-data:
+  nexus-data:

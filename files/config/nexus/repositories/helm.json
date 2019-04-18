@@ -1,0 +1,5 @@
+{
+    "name": "helm",
+    "type": "groovy",
+    "content": "repository.createDockerHosted('docker-hosted'); repository.createDockerProxy('docker-hub','https://registery1.dockerhub.com'); repository.createDockerGroup('docker-all',['docker-hub','docker-hosted'])"
+}

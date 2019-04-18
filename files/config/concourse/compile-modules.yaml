@@ -1,0 +1,26 @@
+jobs:
+- name: compile-modules
+  public: true
+  plan:
+  - get: module_repo
+    trigger: true
+  - task: Compile Modules
+    config:
+      platform: linux
+      inputs:
+        - name: module_repo
+      image_resource:
+        type: docker-image
+        source: 
+          repository: mcr.microsoft.com/powershell
+          version: 6.2.0-alpine-3.8
+      run:
+        path: pwsh
+        dir: module_repo
+        args: ["-f","./build.ps1"]
+resources:
+- name: module_repo
+  type: git
+  source:
+    uri: https://github.com/rhysjtevans/Posh-SYSLOG.git
+    branch: master
