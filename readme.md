@@ -1,13 +1,17 @@
 # PITE (PowerShell in the Enterprise)
 ## Overview
-Building this environment has been on my personal to-do list. <!-- #TODO -->
-fault tolerent.
+Building this environment has been on my to-do list since I put together and gave multiple talks on [PowerShell in the Enterprise](https://github.com/rhysjtevans/Presentations/tree/master/PowerShell%20in%20the%20Enterprise) and soon realised that there was a need for . <!-- #TODO -->
+It is a colmenation of years of experience as a sysadmin and then naturally moving in to a DevOps role.
+
+
 A key requirement is to be able to provision this in a cross platform way.
 
 The aim of this repo is to provide individuals and organisations a very quick and easy way of securing and hardening their PowerShell infrastructure.
 
 ## To-do list
 The to-do list may change over time, if there's anything you are keen to see - raise an issue and let me know!
+### For example,
+If anyone is looking
 ### Docker
 - Docker Images
   - Concourse CI
@@ -37,6 +41,7 @@ The to-do list may change over time, if there's anything you are keen to see - r
   - Vault
     - AppRole Auth Engine
     - PKI Backend Engine
+    - Autounseal (AWS/Azure KMS)
 - Client configuration
   - Beats 
     - Filebeat [Windows, Linux, MacOS]
